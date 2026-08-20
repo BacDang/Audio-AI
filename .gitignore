@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Large raw dataset (GTZAN ~1.3GB)
+genres_original/
+
+# Environments & Virtualenv
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# SQLite local database
+backend/data/*.db
+
+# Temporary & Test files
+*.tmp
+temp/

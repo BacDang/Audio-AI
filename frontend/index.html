@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LapTrinhAmThanh – AI Phân Biệt Thể Loại Nhạc</title>
+  <meta name="description" content="Hệ thống AI nhận diện thể loại âm nhạc sử dụng Machine Learning SVM kết hợp 60 đặc trưng âm học Librosa. Hỗ trợ WAV, MP3, OGG, FLAC.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ANIMATED BACKGROUND -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="app-container">
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- HEADER / NAVBAR                                        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <header class="navbar">
+      <a href="#" class="brand-logo" aria-label="LapTrinhAmThanh">
+        <div class="logo-icon" aria-hidden="true">🎵</div>
+        <div class="brand-text">
+          <span class="brand-name">LapTrinhAmThanh</span>
+          <span class="brand-sub">AI Music Genre Classifier 2.0</span>
+        </div>
+      </a>
+
+      <nav class="nav-tabs" role="tablist" aria-label="Điều hướng chính">
+        <button class="nav-btn active" data-tab="analyzer" role="tab" aria-selected="true" id="tabBtnAnalyzer">
+          <span aria-hidden="true">🔮</span> Nhận Diện
+        </button>
+        <button class="nav-btn" data-tab="genres" role="tab" aria-selected="false" id="tabBtnGenres">
+          <span aria-hidden="true">📚</span> Thư Viện
+        </button>
+        <button class="nav-btn" data-tab="history" role="tab" aria-selected="false" id="tabBtnHistory">
+          <span aria-hidden="true">📊</span> Lịch Sử
+        </button>
+        <button class="nav-btn" data-tab="docs" role="tab" aria-selected="false" id="tabBtnDocs">
+          <span aria-hidden="true">⚡</span> API
+        </button>
+      </nav>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MAIN CONTENT                                           -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <main>
+
+      <!-- ─────────────────────────────────────── -->
+      <!-- TAB 1: ANALYZER WORKSPACE              -->
+      <!-- ─────────────────────────────────────── -->
+      <section id="tab-analyzer" class="tab-pane active" role="tabpanel" aria-labelledby="tabBtnAnalyzer">
+
+        <div class="hero-banner">
+          <div class="hero-badge">✨ Powered by SVM + Librosa (60 Features)</div>
+          <h2>Nhận Diện Thể Loại Nhạc<br><span class="gradient-text">Bằng Trí Tuệ Nhân Tạo</span></h2>
+          <p>Tải lên file âm thanh — AI sẽ phân tích MFCC, Nhịp độ, Phổ tần số, Hòa âm &amp; Tiết tấu để xác định thể loại trong vài giây.</p>
+        </div>
+
+        <div class="grid-analyzer">
+
+          <!-- LEFT: UPLOAD & PLAYER -->
+          <div class="left-panel">
+            <div class="glass-card upload-card">
+
+              <h3 class="card-title"><span>🎼</span> Tải Lên File Âm Thanh</h3>
+
+              <!-- Drop Zone -->
+              <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Khu vực kéo thả file âm thanh">
+                <input type="file" id="fileInput" accept=".wav,.mp3,.ogg,.flac,.m4a,.aac" aria-label="Chọn file âm thanh">
+                <div class="drop-icon">🎼</div>
+                <div class="drop-text">
+                  <strong>Kéo thả hoặc bấm để chọn file</strong>
+                  <span>Hỗ trợ WAV · MP3 · OGG · FLAC (Tối đa 50MB)</span>
+                </div>
+              </div>
+
+              <!-- File Badge -->
+              <div class="file-badge" id="fileBadge" aria-live="polite">
+                <span class="file-icon">🎵</span>
+                <span class="file-name" id="fileNameDisplay"></span>
+                <button type="button" class="btn-remove" id="btnRemoveFile" aria-label="Xóa file đã chọn">✕</button>
+              </div>
+
+              <!-- Demo Samples -->
+              <div class="demo-section">
+                <div class="demo-label">
+                  <span>Hoặc thử nhanh với nhạc mẫu:</span>
+                  <span class="demo-count" id="demoCount">Đang tải...</span>
+                </div>
+                <div class="demo-chips" id="demoChipsContainer" role="list"></div>
+              </div>
+
+              <!-- Audio Player -->
+              <div class="player-wrapper" id="playerSection" hidden>
+                <canvas id="visualizerCanvas" class="visualizer-canvas" aria-label="Biểu đồ sóng âm"></canvas>
+                <div class="player-controls">
+                  <button type="button" class="btn-play" id="btnPlayPause" aria-label="Phát/Dừng nhạc">
+                    <svg id="iconPlay" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="iconPause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  </button>
+                  <div class="player-progress">
+                    <input type="range" id="progressSlider" min="0" max="100" value="0" class="slider" aria-label="Tiến độ phát nhạc">
+                    <div class="time-row">
+                      <span id="timeCurrent">0:00</span>
+                      <span id="timeTotal">0:00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Analyze Button -->
+              <button type="button" class="btn-analyze" id="btnAnalyze" disabled aria-busy="false">
+                <svg class="spinner-icon" id="btnSpinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" hidden aria-hidden="true">
+                  <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/>
+                </svg>
+                <span id="btnAnalyzeText">🔮 Bắt Đầu Phân Tích &amp; Nhận Diện</span>
+              </button>
+
+            </div>
+          </div><!-- /left-panel -->
+
+          <!-- RIGHT: RESULTS -->
+          <div class="right-panel">
+
+            <!-- Placeholder -->
+            <div class="results-placeholder" id="resultsPlaceholder">
+              <div class="placeholder-visual">🎧</div>
+              <h3>Chưa Có Kết Quả</h3>
+              <p>Chọn file nhạc bên trái hoặc thử file mẫu, rồi bấm <strong>Bắt đầu phân tích</strong>.</p>
+              <div class="placeholder-hints">
+                <span>🎸 Blues</span><span>🎻 Classical</span><span>🎤 HipHop</span>
+                <span>🎷 Jazz</span><span>⚡ Metal</span><span>🌴 Reggae</span>
+              </div>
+            </div>
+
+            <!-- Results Dashboard -->
+            <div class="results-dashboard" id="resultsContainer" hidden>
+
+              <!-- Hero Prediction -->
+              <div class="hero-result-card" id="heroGenreCard">
+                <div class="hero-bg-glow" id="heroBgGlow" aria-hidden="true"></div>
+                <div class="hero-content">
+                  <div class="confidence-chip" id="heroConfidenceBadge">⚡ Đang tính...</div>
+                  <div class="genre-display">
+                    <div class="genre-icon-large" id="heroGenreIcon">🎵</div>
+                    <div>
+                      <div class="genre-name-en" id="heroGenreName">UNKNOWN</div>
+                      <div class="genre-name-vi" id="heroGenreNameVi">...</div>
+                    </div>
+                  </div>
+                  <div class="genre-description" id="heroGenreDesc">Đang phân tích...</div>
+                  <div class="sample-artists" id="heroSampleArtists"></div>
+                </div>
+              </div>
+
+              <!-- Probability Bars -->
+              <div class="glass-card prob-card">
+                <div class="card-title-row">
+                  <h4>📊 Phân Bố Xác Suất 10 Thể Loại</h4>
+                  <span class="subtitle-badge">SVM predict_proba</span>
+                </div>
+                <div class="prob-list" id="probBarsList"></div>
+              </div>
+
+              <!-- Acoustic Metrics Grid -->
+              <div class="glass-card metrics-card">
+                <div class="card-title-row">
+                  <h4>🎛️ Đặc Trưng Âm Học (Librosa)</h4>
+                  <span class="subtitle-badge">60 Features Extracted</span>
+                </div>
+                <div class="metrics-grid">
+                  <div class="metric-tile" id="metricTileTempo">
+                    <div class="metric-icon">🥁</div>
+                    <div class="metric-value" id="metricTempo">--</div>
+                    <div class="metric-label">Tempo (BPM)</div>
+                  </div>
+                  <div class="metric-tile">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-value" id="metricRms">--</div>
+                    <div class="metric-label">RMS Energy</div>
+                  </div>
+                  <div class="metric-tile">
+                    <div class="metric-icon">🌈</div>
+                    <div class="metric-value" id="metricCentroid">--</div>
+                    <div class="metric-label">Spectral Centroid</div>
+                  </div>
+                  <div class="metric-tile">
+                    <div class="metric-icon">🎵</div>
+                    <div class="metric-value" id="metricHarmonic">--</div>
+                    <div class="metric-label">Hòa Âm</div>
+                  </div>
+                  <div class="metric-tile">
+                    <div class="metric-icon">💥</div>
+                    <div class="metric-value" id="metricPercussive">--</div>
+                    <div class="metric-label">Tiết Tấu</div>
+                  </div>
+                  <div class="metric-tile">
+                    <div class="metric-icon">🌊</div>
+                    <div class="metric-value" id="metricRolloff">--</div>
+                    <div class="metric-label">Rolloff</div>
+                  </div>
+                </div>
+                <!-- Processing Time -->
+                <div class="processing-time" id="processingTime"></div>
+              </div>
+
+            </div><!-- /results-dashboard -->
+
+          </div><!-- /right-panel -->
+        </div><!-- /grid-analyzer -->
+      </section>
+
+      <!-- ─────────────────────────────────────── -->
+      <!-- TAB 2: GENRE EXPLORER                  -->
+      <!-- ─────────────────────────────────────── -->
+      <section id="tab-genres" class="tab-pane" role="tabpanel" aria-labelledby="tabBtnGenres" hidden>
+        <div class="hero-banner">
+          <div class="hero-badge">📚 GTZAN Dataset – 10 Thể Loại</div>
+          <h2>Bách Khoa Toàn Thư<br><span class="gradient-text">Thể Loại Âm Nhạc</span></h2>
+          <p>Tìm hiểu đặc trưng âm học, cấu trúc phổ tần, nhạc cụ và nghệ sĩ tiêu biểu của từng dòng nhạc.</p>
+        </div>
+        <div class="genres-grid" id="genresGrid"></div>
+      </section>
+
+      <!-- ─────────────────────────────────────── -->
+      <!-- TAB 3: HISTORY & ANALYTICS             -->
+      <!-- ─────────────────────────────────────── -->
+      <section id="tab-history" class="tab-pane" role="tabpanel" aria-labelledby="tabBtnHistory" hidden>
+        <div class="hero-banner">
+          <div class="hero-badge">📊 SQLite Auto-Save</div>
+          <h2>Lịch Sử Phân Tích<br><span class="gradient-text">&amp; Thống Kê</span></h2>
+          <p>Toàn bộ các lượt nhận diện được lưu tự động. Theo dõi xu hướng và xem lại kết quả bất kỳ lúc nào.</p>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-icon" style="background: rgba(99,102,241,0.15); color:#818cf8;">📈</div>
+            <div class="stat-card-body">
+              <div class="stat-value" id="statTotal">0</div>
+              <div class="stat-label">Tổng Lượt Phân Tích</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon" style="background: rgba(16,185,129,0.15); color:#10b981;">🎯</div>
+            <div class="stat-card-body">
+              <div class="stat-value" id="statConfidence">0%</div>
+              <div class="stat-label">Độ Tin Cậy TB</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon" style="background: rgba(245,158,11,0.15); color:#f59e0b;">🎵</div>
+            <div class="stat-card-body">
+              <div class="stat-value" id="statBpm">0</div>
+              <div class="stat-label">Tempo TB (BPM)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Genre Distribution Bar -->
+        <div class="glass-card" style="margin-bottom: 24px; padding: 20px 24px;" id="genreDistCard">
+          <div class="card-title-row" style="margin-bottom:14px;">
+            <h4>🍰 Phân Bố Thể Loại Đã Phân Tích</h4>
+          </div>
+          <div id="genreDistBars"></div>
+        </div>
+
+        <!-- History Table -->
+        <div class="table-wrapper">
+          <div class="table-header-row">
+            <h4>📋 Danh Sách Lịch Sử</h4>
+            <button type="button" class="btn-icon" id="btnRefreshHistory" title="Làm mới dữ liệu">🔄 Làm mới</button>
+          </div>
+          <table class="data-table" aria-label="Lịch sử phân tích âm nhạc">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Tên File</th>
+                <th scope="col">Thể Loại AI</th>
+                <th scope="col">Tin Cậy</th>
+                <th scope="col">Tempo</th>
+                <th scope="col">Thời Gian XL</th>
+                <th scope="col">Ngày Phân Tích</th>
+                <th scope="col">Xóa</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ─────────────────────────────────────── -->
+      <!-- TAB 4: API DOCS                        -->
+      <!-- ─────────────────────────────────────── -->
+      <section id="tab-docs" class="tab-pane" role="tabpanel" aria-labelledby="tabBtnDocs" hidden>
+        <div class="hero-banner">
+          <div class="hero-badge">⚡ FastAPI + OpenAPI 3.0</div>
+          <h2>Tài Liệu<br><span class="gradient-text">REST API</span></h2>
+          <p>Tích hợp hệ thống nhận diện âm nhạc vào ứng dụng của bạn qua chuẩn RESTful JSON API. Hoàn toàn stateless và dễ sử dụng.</p>
+        </div>
+
+        <!-- Swagger Link Banner -->
+        <div class="swagger-banner glass-card">
+          <div>
+            <h3>🚀 Swagger UI – Giao Diện API Tương Tác</h3>
+            <p>Thử nghiệm trực tiếp tất cả endpoints, xem request/response schema và tài liệu đầy đủ.</p>
+          </div>
+          <a href="/docs" target="_blank" rel="noopener noreferrer" class="btn-swagger">Mở Swagger UI ↗</a>
+        </div>
+
+        <div class="api-grid">
+
+          <div class="api-card">
+            <div class="api-card-header">
+              <span class="method-badge post">POST</span>
+              <code class="endpoint-path">/api/predict</code>
+            </div>
+            <p>Upload file âm thanh (multipart/form-data). Trả về thể loại, xác suất phân bố và 60 đặc trưng âm học.</p>
+            <pre class="code-block">curl -X POST "http://localhost:8000/api/predict" \
+  -H "accept: application/json" \
+  -F "file=@my_song.mp3"</pre>
+          </div>
+
+          <div class="api-card">
+            <div class="api-card-header">
+              <span class="method-badge post">POST</span>
+              <code class="endpoint-path">/api/predict-demo</code>
+            </div>
+            <p>Phân tích bài hát mẫu có sẵn. Query params: <code>genre</code> và <code>filename</code>.</p>
+            <pre class="code-block">curl -X POST \
+  "http://localhost:8000/api/predict-demo\
+?genre=blues&filename=blues_1.wav"</pre>
+          </div>
+
+          <div class="api-card">
+            <div class="api-card-header">
+              <span class="method-badge get">GET</span>
+              <code class="endpoint-path">/api/genres</code>
+            </div>
+            <p>Danh sách 10 thể loại nhạc kèm mô tả chi tiết, icon, màu sắc và nghệ sĩ tiêu biểu.</p>
+            <pre class="code-block">curl "http://localhost:8000/api/genres"</pre>
+          </div>
+
+          <div class="api-card">
+            <div class="api-card-header">
+              <span class="method-badge get">GET</span>
+              <code class="endpoint-path">/api/demo-samples</code>
+            </div>
+            <p>Danh sách tất cả file nhạc mẫu trong thư mục <code>music_test/</code>.</p>
+            <pre class="code-block">curl "http://localhost:8000/api/demo-samples"</pre>
+          </div>
+
+          <div class="api-card">
+            <div class="api-card-header">
+              <span class="method-badge get">GET</span>
+              <code class="endpoint-path">/api/history</code>
+            </div>
+            <p>Lịch sử phân tích từ SQLite. Query param: <code>limit</code> (1-200, mặc định 50).</p>
+            <pre class="code-block">curl "http://localhost:8000/api/history?limit=20"</pre>
+          </div>
+
+          <div class="api-card">
+            <div class="api-card-header">
+              <span class="method-badge get">GET</span>
+              <code class="endpoint-path">/api/stats</code>
+            </div>
+            <p>Thống kê tổng hợp: tổng lượt, độ tin cậy trung bình, phân bố thể loại.</p>
+            <pre class="code-block">curl "http://localhost:8000/api/stats"</pre>
+          </div>
+
+          <div class="api-card">
+            <div class="api-card-header">
+              <span class="method-badge delete">DELETE</span>
+              <code class="endpoint-path">/api/history/{id}</code>
+            </div>
+            <p>Xóa một bản ghi lịch sử theo ID.</p>
+            <pre class="code-block">curl -X DELETE \
+  "http://localhost:8000/api/history/5"</pre>
+          </div>
+
+          <div class="api-card">
+            <div class="api-card-header">
+              <span class="method-badge get">GET</span>
+              <code class="endpoint-path">/api/health</code>
+            </div>
+            <p>Kiểm tra trạng thái server và thông tin model AI đã tải.</p>
+            <pre class="code-block">curl "http://localhost:8000/api/health"</pre>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container" role="alert" aria-live="assertive"></div>
+
+  <script src="/js/visualizer.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
